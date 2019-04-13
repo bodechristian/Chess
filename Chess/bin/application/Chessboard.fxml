@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.GridPane?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.boardController">
+	<GridPane fx:id="board" minHeight="800" minWidth="800" gridLinesVisible="true"  AnchorPane.bottomAnchor="50"
+		AnchorPane.leftAnchor="50" AnchorPane.rightAnchor="50"
+		AnchorPane.topAnchor="50">
+	</GridPane>
+</AnchorPane>
+

@@ -1,0 +1,9 @@
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+
+#white:hover {
+	-fx-background-color: blue;
+}
+
+#black:hover {
+	-fx-background-color: blue;
+}
