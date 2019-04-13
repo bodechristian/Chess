@@ -19,6 +19,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -29,7 +33,8 @@ public class boardController {
 	@FXML
 	GridPane board;
 
-	//
+	//p.setBackground(new Background(Arrays.asList(bgfBlue), Arrays.asList(bgi)));
+	
 	List<Tuple<Integer, Integer>> legalMoves = new ArrayList<Tuple<Integer, Integer>>();
 
 	@FXML
@@ -37,15 +42,21 @@ public class boardController {
 		settingUpTiles();
 		settingUpPieces();
 		settingUpCellIdentifiers();
+
 	}
 
 	/**
 	 * creates the tiles, including background color and all the drag&drop events
 	 */
 	private void settingUpTiles() {
+
 		BackgroundFill bgfBlack = new BackgroundFill(Paint.valueOf("#7e4c39"), new CornerRadii(0), new Insets(0));
 		BackgroundFill bgfWhite = new BackgroundFill(Paint.valueOf("#f5f5f5"), new CornerRadii(0), new Insets(0));
 		BackgroundFill bgfBlue = new BackgroundFill(Paint.valueOf("blue"), new CornerRadii(0), new Insets(0));
+
+		BackgroundImage bgi = new BackgroundImage(new Image(new File("ChessPics/blackRook.png").toURI().toString()),
+				BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
+				new BackgroundSize(10, 10, false, false, true, true));
 
 		// Sets the background color for all the tiles
 		for (int i = 0; i < 8; i++) {
@@ -54,7 +65,8 @@ public class boardController {
 				p.setMinHeight(100);
 				p.setMinWidth(100);
 				if ((i + j) % 2 == 0) {
-					p.setBackground(new Background(bgfWhite));
+					p.setBackground(new Background(bgfWhite));	
+					p.setBackground(new Background(Arrays.asList(bgfBlue), Arrays.asList(bgi)));
 					p.setId("white");
 				} else {
 					p.setBackground(new Background(bgfBlack));
@@ -99,33 +111,8 @@ public class boardController {
 						event.consume();
 					}
 				});
-				board.add(p, i, j);
+				board.add(p, i, j);	
 			}
-		}
-	}
-
-	/**
-	 * creates the identifiers at the side of the chess board (1..8, A..H)
-	 */
-	private void settingUpCellIdentifiers() {
-		List<String> alphabets = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
-
-		for (int i = 1; i < 9; i++) {
-			// Numberrow
-			StackPane sp = new StackPane();
-			sp.setMinWidth(100);
-			sp.setMinHeight(15);
-			Label l = new Label(i + "");
-			sp.getChildren().add(l);
-			board.add(sp, i - 1, 8);
-
-			// AlphabetColumn
-			StackPane sps = new StackPane();
-			sps.setMinHeight(100);
-			sps.setMinWidth(15);
-			Label ls = new Label(alphabets.get(i - 1));
-			sps.getChildren().add(ls);
-			board.add(sps, 8, i - 1);
 		}
 	}
 
@@ -163,6 +150,31 @@ public class boardController {
 	}
 
 	/**
+	 * creates the identifiers at the side of the chess board (1..8, A..H)
+	 */
+	private void settingUpCellIdentifiers() {
+		List<String> alphabets = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
+
+		for (int i = 1; i < 9; i++) {
+			// Numberrow
+			StackPane sp = new StackPane();
+			sp.setMinWidth(100);
+			sp.setMinHeight(15);
+			Label l = new Label(i + "");
+			sp.getChildren().add(l);
+			board.add(sp, i - 1, 8);
+
+			// AlphabetColumn
+			StackPane sps = new StackPane();
+			sps.setMinHeight(100);
+			sps.setMinWidth(15);
+			Label ls = new Label(alphabets.get(i - 1));
+			sps.getChildren().add(ls);
+			board.add(sps, 8, i - 1);
+		}
+	}
+
+	/**
 	 * Triggers on a tile when a mouse is dragging on it (Drag&Drop)
 	 * 
 	 * @param source the tile on which the dragging is started
@@ -176,6 +188,7 @@ public class boardController {
 		content.putString("");
 		db.setContent(content);
 	}
+
 	/**
 	 * Triggers on a tile when a mouse is dropped on it (Drag&Drop)
 	 * 
@@ -200,7 +213,7 @@ public class boardController {
 	private void legalMoves(Pane source) {
 		// TODO: add legal moves to List
 	}
-	
+
 	/**
 	 * checks if the move to the given tile is a legal one
 	 * 
@@ -208,7 +221,7 @@ public class boardController {
 	 * @return true if move is legal
 	 */
 	private boolean checkLegalMove(Pane target) {
-		//GridPane.getColumnIndex(target), GridPane.getRowIndex(target)
+		// GridPane.getColumnIndex(target), GridPane.getRowIndex(target)
 		// DONE: check if target is in legal move list
 		if (legalMoves
 				.contains(new Tuple<Integer, Integer>(GridPane.getColumnIndex(target), GridPane.getRowIndex(target)))) {
