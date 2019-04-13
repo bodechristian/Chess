@@ -1,6 +1,5 @@
 package application;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,145 +7,131 @@ import java.util.List;
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundRepeat;
-import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 
 public class boardController {
 	@FXML
 	GridPane board;
-
-	//p.setBackground(new Background(Arrays.asList(bgfBlue), Arrays.asList(bgi)));
 	
 	List<Tuple<Integer, Integer>> legalMoves = new ArrayList<Tuple<Integer, Integer>>();
+	List<Pieces> killedPieces = new ArrayList<Pieces>();
+	Tile[][] tileArray = new Tile[8][8];
+	Tile clickedSource;
+	
+	String hoverColor = "blue", clickedColor = "green";
 
 	@FXML
 	public void initialize() throws IOException {
 		settingUpTiles();
 		settingUpPieces();
 		settingUpCellIdentifiers();
-
 	}
 
 	/**
 	 * creates the tiles, including background color and all the drag&drop events
 	 */
 	private void settingUpTiles() {
-
-		BackgroundFill bgfBlack = new BackgroundFill(Paint.valueOf("#7e4c39"), new CornerRadii(0), new Insets(0));
-		BackgroundFill bgfWhite = new BackgroundFill(Paint.valueOf("#f5f5f5"), new CornerRadii(0), new Insets(0));
-		BackgroundFill bgfBlue = new BackgroundFill(Paint.valueOf("blue"), new CornerRadii(0), new Insets(0));
-
-		BackgroundImage bgi = new BackgroundImage(new Image(new File("ChessPics/blackRook.png").toURI().toString()),
-				BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-				new BackgroundSize(10, 10, false, false, true, true));
-
-		// Sets the background color for all the tiles
+		// Sets up all the tiles
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				Pane p = new Pane();
-				p.setMinHeight(100);
-				p.setMinWidth(100);
-				if ((i + j) % 2 == 0) {
-					p.setBackground(new Background(bgfWhite));	
-					p.setBackground(new Background(Arrays.asList(bgfBlue), Arrays.asList(bgi)));
-					p.setId("white");
-				} else {
-					p.setBackground(new Background(bgfBlack));
-					p.setId("black");
-				}
-
+				Tile t = new Tile(new Tuple<Integer, Integer>(i,j));
+				
 				// Setting up drop and draggers
-				p.setOnDragDetected(new EventHandler<MouseEvent>() {
+				t.setOnDragDetected(new EventHandler<MouseEvent>() {
 					@Override
 					public void handle(MouseEvent event) {
-						dragStart((Pane) event.getSource());
+						dragStart((Tile) event.getSource());
 						event.consume();
 					}
 				});
-				p.setOnDragDropped(new EventHandler<DragEvent>() {
+				t.setOnDragDropped(new EventHandler<DragEvent>() {
 					@Override
 					public void handle(DragEvent event) {
-						dragDropped((Pane) event.getGestureSource(), (Pane) event.getGestureTarget());
+						dragDropped((Tile) event.getGestureSource(), (Tile) event.getGestureTarget());
 						event.consume();
 					}
 				});
-				p.setOnDragEntered(new EventHandler<DragEvent>() {
+				t.setOnDragEntered(new EventHandler<DragEvent>() {
 					@Override
 					public void handle(DragEvent event) {
-						p.setBackground(new Background(bgfBlue));
+						if(!t.equals(clickedSource))
+							t.colorBackground(Paint.valueOf(hoverColor));
 						event.consume();
 					}
 				});
-				p.setOnDragExited(new EventHandler<DragEvent>() {
+				t.setOnDragExited(new EventHandler<DragEvent>() {
 					@Override
 					public void handle(DragEvent event) {
-						if (p.getId().equals("white"))
-							p.setBackground(new Background(bgfWhite));
-						else
-							p.setBackground(new Background(bgfBlack));
+						if(!t.equals(clickedSource))
+							t.resetBackground();
 						event.consume();
 					}
 				});
-				p.setOnDragOver(new EventHandler<DragEvent>() {
+				t.setOnDragOver(new EventHandler<DragEvent>() {
 					public void handle(DragEvent event) {
 						event.acceptTransferModes(TransferMode.ANY);
 						event.consume();
 					}
 				});
-				board.add(p, i, j);	
+				t.setOnMouseEntered(new EventHandler<MouseEvent>() {
+					@Override
+					public void handle(MouseEvent event) {
+						if(!t.equals(clickedSource))
+							t.colorBackground(Paint.valueOf(hoverColor));
+						event.consume();
+					}					
+				});
+				t.setOnMouseExited(new EventHandler<MouseEvent>() {
+					@Override
+					public void handle(MouseEvent event) {
+						if(!t.equals(clickedSource))
+							t.resetBackground();
+						event.consume();
+					}	
+				});
+				tileArray[i][j] = t;
+				board.add(t, i, j);	
 			}
 		}
 	}
 
 	/**
-	 * ATM creates image views for each piece and puts it at their starting position
-	 * ?? in future summarized with pane in own class
+	 * Puts the piece in the starting positions
 	 */
 	private void settingUpPieces() {
 		// Setting up whites figures
-		board.add(new ImageView(new Image(new File("ChessPics/Rook.png").toURI().toString())), 0, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Rook.png").toURI().toString())), 7, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Knight.png").toURI().toString())), 1, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Knight.png").toURI().toString())), 6, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Bishop.png").toURI().toString())), 2, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Bishop.png").toURI().toString())), 5, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/King.png").toURI().toString())), 4, 7);
-		board.add(new ImageView(new Image(new File("ChessPics/Queen.png").toURI().toString())), 3, 7);
+		tileArray[0][7].setPiece(Pieces.whiteRook);
+		tileArray[7][7].setPiece(Pieces.whiteRook);
+		tileArray[1][7].setPiece(Pieces.whiteKnight);
+		tileArray[6][7].setPiece(Pieces.whiteKnight);
+		tileArray[2][7].setPiece(Pieces.whiteBishop);
+		tileArray[5][7].setPiece(Pieces.whiteBishop);
+		tileArray[4][7].setPiece(Pieces.whiteKing);
+		tileArray[3][7].setPiece(Pieces.whiteQueen);
 		// pawns
 		for (int i = 0; i < 8; i++)
-			board.add(new ImageView(new Image(new File("ChessPics/Pawn.png").toURI().toString())), i, 6);
-
+			tileArray[i][6].setPiece(Pieces.whitePawn);
+		
 		// Setting up blacks figures
-		board.add(new ImageView(new Image(new File("ChessPics/blackRook.png").toURI().toString())), 0, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackRook.png").toURI().toString())), 7, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackKnight.png").toURI().toString())), 1, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackKnight.png").toURI().toString())), 6, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackBishop.png").toURI().toString())), 2, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackBishop.png").toURI().toString())), 5, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackKing.png").toURI().toString())), 4, 0);
-		board.add(new ImageView(new Image(new File("ChessPics/blackQueen.png").toURI().toString())), 3, 0);
+		tileArray[0][0].setPiece(Pieces.blackRook);
+		tileArray[7][0].setPiece(Pieces.blackRook);
+		tileArray[1][0].setPiece(Pieces.blackKnight);
+		tileArray[6][0].setPiece(Pieces.blackKnight);
+		tileArray[2][0].setPiece(Pieces.blackBishop);
+		tileArray[5][0].setPiece(Pieces.blackBishop);
+		tileArray[4][0].setPiece(Pieces.blackKing);
+		tileArray[3][0].setPiece(Pieces.blackQueen);
 		// pawns
 		for (int i = 0; i < 8; i++)
-			board.add(new ImageView(new Image(new File("ChessPics/blackPawn.png").toURI().toString())), i, 1);
-
+			tileArray[i][1].setPiece(Pieces.blackPawn);
 	}
 
 	/**
@@ -179,9 +164,10 @@ public class boardController {
 	 * 
 	 * @param source the tile on which the dragging is started
 	 */
-	private void dragStart(Pane source) {
+	private void dragStart(Tile source) {
 		legalMoves(source);
-
+		clickedSource = source;
+		source.colorBackground(Paint.valueOf(clickedColor));
 		// Drag&Drop stuff
 		Dragboard db = source.startDragAndDrop(TransferMode.ANY);
 		ClipboardContent content = new ClipboardContent();
@@ -195,13 +181,15 @@ public class boardController {
 	 * @param source the tile from where its dragged
 	 * @param target the tile on which its dropped
 	 */
-	private void dragDropped(Pane source, Pane target) {
+	private void dragDropped(Tile source, Tile target) {
 		if (checkLegalMove(target)) {
 			move(source, target);
 		}
+		source.resetBackground();
+		target.colorBackground(Paint.valueOf(clickedColor));
 		legalMoves.clear();
-		System.out.println(GridPane.getColumnIndex(source) + " " + GridPane.getRowIndex(source) + " | "
-				+ GridPane.getColumnIndex(target) + " " + GridPane.getRowIndex(target));
+		System.out.println(source.getCoord().x + " " + source.getCoord().y + " | "
+				+ target.getCoord().x + " " + target.getCoord().y);
 	}
 
 	/**
@@ -210,7 +198,7 @@ public class boardController {
 	 * 
 	 * @param p the Pane
 	 */
-	private void legalMoves(Pane source) {
+	private void legalMoves(Tile source) {
 		// TODO: add legal moves to List
 	}
 
@@ -220,11 +208,11 @@ public class boardController {
 	 * @param target the tile that is being moved on
 	 * @return true if move is legal
 	 */
-	private boolean checkLegalMove(Pane target) {
+	private boolean checkLegalMove(Tile target) {
 		// GridPane.getColumnIndex(target), GridPane.getRowIndex(target)
 		// DONE: check if target is in legal move list
 		if (legalMoves
-				.contains(new Tuple<Integer, Integer>(GridPane.getColumnIndex(target), GridPane.getRowIndex(target)))) {
+				.contains(new Tuple<Integer, Integer>(target.getCoord().x, target.getCoord().y))) {
 			return true;
 		}
 		return false;
@@ -236,7 +224,13 @@ public class boardController {
 	 * @param source moves from this
 	 * @param target to this
 	 */
-	private void move(Pane source, Pane target) {
-		// TODO: move... Xd
+	private void move(Tile source, Tile target) {
+		// DONE: move... Xd
+		// DONE: Make List of killed pieces
+		// TODO: Do something with the list of killed enemies
+		Pieces p = source.getPiece();
+		target.setPiece(p);
+		killedPieces.add(p);
+		source.setPiece(Pieces.EMPTY);
 	}
 }

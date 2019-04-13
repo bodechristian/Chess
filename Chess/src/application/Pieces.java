@@ -1,5 +1,6 @@
 package application;
 
 public enum Pieces {
-	King, Queen, Rook, Bishop, Knight, Pawn;
+	whiteKing, whiteQueen, whiteRook, whiteBishop, whiteKnight, whitePawn, blackKing, blackQueen, blackRook,
+	blackBishop, blackKnight, blackPawn, EMPTY;
 }
