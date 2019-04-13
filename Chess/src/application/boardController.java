@@ -20,12 +20,13 @@ import javafx.scene.paint.Paint;
 public class boardController {
 	@FXML
 	GridPane board;
-	
+
 	List<Tuple<Integer, Integer>> legalMoves = new ArrayList<Tuple<Integer, Integer>>();
 	List<Pieces> killedPieces = new ArrayList<Pieces>();
 	Tile[][] tileArray = new Tile[8][8];
 	Tile clickedSource;
-	
+	boolean whitesTurn = true;
+
 	String hoverColor = "blue", clickedColor = "green";
 
 	@FXML
@@ -33,6 +34,7 @@ public class boardController {
 		settingUpTiles();
 		settingUpPieces();
 		settingUpCellIdentifiers();
+		move(tileArray[3][1], tileArray[0][5]);
 	}
 
 	/**
@@ -42,8 +44,8 @@ public class boardController {
 		// Sets up all the tiles
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				Tile t = new Tile(new Tuple<Integer, Integer>(i,j));
-				
+				Tile t = new Tile(new Tuple<Integer, Integer>(i, j));
+
 				// Setting up drop and draggers
 				t.setOnDragDetected(new EventHandler<MouseEvent>() {
 					@Override
@@ -62,7 +64,7 @@ public class boardController {
 				t.setOnDragEntered(new EventHandler<DragEvent>() {
 					@Override
 					public void handle(DragEvent event) {
-						if(!t.equals(clickedSource))
+						if (!t.equals(clickedSource))
 							t.colorBackground(Paint.valueOf(hoverColor));
 						event.consume();
 					}
@@ -70,7 +72,7 @@ public class boardController {
 				t.setOnDragExited(new EventHandler<DragEvent>() {
 					@Override
 					public void handle(DragEvent event) {
-						if(!t.equals(clickedSource))
+						if (!t.equals(clickedSource))
 							t.resetBackground();
 						event.consume();
 					}
@@ -84,21 +86,21 @@ public class boardController {
 				t.setOnMouseEntered(new EventHandler<MouseEvent>() {
 					@Override
 					public void handle(MouseEvent event) {
-						if(!t.equals(clickedSource))
+						if (!t.equals(clickedSource))
 							t.colorBackground(Paint.valueOf(hoverColor));
 						event.consume();
-					}					
+					}
 				});
 				t.setOnMouseExited(new EventHandler<MouseEvent>() {
 					@Override
 					public void handle(MouseEvent event) {
-						if(!t.equals(clickedSource))
+						if (!t.equals(clickedSource))
 							t.resetBackground();
 						event.consume();
-					}	
+					}
 				});
 				tileArray[i][j] = t;
-				board.add(t, i, j);	
+				board.add(t, i, j);
 			}
 		}
 	}
@@ -119,7 +121,7 @@ public class boardController {
 		// pawns
 		for (int i = 0; i < 8; i++)
 			tileArray[i][6].setPiece(Pieces.whitePawn);
-		
+
 		// Setting up blacks figures
 		tileArray[0][0].setPiece(Pieces.blackRook);
 		tileArray[7][0].setPiece(Pieces.blackRook);
@@ -186,10 +188,8 @@ public class boardController {
 			move(source, target);
 		}
 		source.resetBackground();
-		target.colorBackground(Paint.valueOf(clickedColor));
+		target.colorBackground(Paint.valueOf("#ffffff"));
 		legalMoves.clear();
-		System.out.println(source.getCoord().x + " " + source.getCoord().y + " | "
-				+ target.getCoord().x + " " + target.getCoord().y);
 	}
 
 	/**
@@ -199,7 +199,317 @@ public class boardController {
 	 * @param p the Pane
 	 */
 	private void legalMoves(Tile source) {
-		// TODO: add legal moves to List
+		switch (source.getPiece()) {
+		case EMPTY:
+			break;
+		case blackBishop:
+			moveBishop(source.getCoord(), false);
+			break;
+		case whiteBishop:
+			moveBishop(source.getCoord(), true);
+			break;
+		case blackKing:
+			moveKing(source.getCoord(), false);
+			break;
+		case whiteKing:
+			moveKing(source.getCoord(), true);
+			break;
+		case blackKnight:
+			moveKnight(source.getCoord(), false);
+			break;
+		case whiteKnight:
+			moveKnight(source.getCoord(), true);
+			break;
+		case blackPawn:
+			movePawn(source.getCoord(), false);
+			break;
+		case whitePawn:
+			movePawn(source.getCoord(), true);
+			break;
+		case blackQueen:
+			moveQueen(source.getCoord(), false);
+			break;
+		case whiteQueen:
+			moveQueen(source.getCoord(), true);
+			break;
+		case blackRook:
+			moveRook(source.getCoord(), false);
+			break;
+		case whiteRook:
+			moveRook(source.getCoord(), true);
+			break;
+		}
+	}
+
+	private void moveBishop(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		boolean stop = false;
+
+		// check towards the top left
+		int x = coord.x - 1;
+		int y = coord.y - 1;
+		while (x >= 0 && y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+			y--;
+		}
+
+		// check towards the top right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y - 1;
+		while (x < 8 && y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+			y--;
+		}
+
+		// check towards bottom left
+		stop = false;
+		x = coord.x - 1;
+		y = coord.y + 1;
+		while (x >= 0 && y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+			y++;
+		}
+
+		// check towards bottom right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y + 1;
+		while (x < 8 && y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+			y++;
+		}
+	}
+
+	private void moveKing(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		nextTileCheck(tileArray[coord.x - 1][coord.y - 1].getPiece(), whitePiece, coord.x - 1, coord.y - 1);
+		nextTileCheck(tileArray[coord.x][coord.y - 1].getPiece(), whitePiece, coord.x, coord.y - 1);
+		nextTileCheck(tileArray[coord.x + 1][coord.y - 1].getPiece(), whitePiece, coord.x + 1, coord.y - 1);
+		nextTileCheck(tileArray[coord.x + 1][coord.y].getPiece(), whitePiece, coord.x + 1, coord.y);
+		nextTileCheck(tileArray[coord.x + 1][coord.y + 1].getPiece(), whitePiece, coord.x + 1, coord.y + 1);
+		nextTileCheck(tileArray[coord.x][coord.y + 1].getPiece(), whitePiece, coord.x, coord.y + 1);
+		nextTileCheck(tileArray[coord.x - 1][coord.y + 1].getPiece(), whitePiece, coord.x - 1, coord.y + 1);
+		nextTileCheck(tileArray[coord.x - 1][coord.y].getPiece(), whitePiece, coord.x - 1, coord.y);
+	}
+
+	private void moveKnight(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		int x = coord.x - 2;
+		int y = coord.y + 1;
+		if (x >= 0 && y < 8)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x - 2;
+		y = coord.y - 1;
+		if (x >= 0 && y >= 0)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x - 1;
+		y = coord.y - 2;
+		if (x >= 0 && y >= 0)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x + 1;
+		y = coord.y - 2;
+		if (x < 8 && y >= 0)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x + 2;
+		y = coord.y - 1;
+		if (x < 8 && y >= 0)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x + 2;
+		y = coord.y + 1;
+		if (x < 8 && y < 8)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x + 1;
+		y = coord.y + 2;
+		if (x < 8 && y < 8)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+		x = coord.x - 1;
+		y = coord.y + 2;
+		if (x >= 0 && y < 8)
+			nextTileCheck(tileArray[x][y].getPiece(), whitePiece, x, y);
+	}
+
+	private void movePawn(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		// TODO:en passant
+		if (tileArray[coord.x][coord.y].getPiece().toString().startsWith("w")) {
+			if (coord.x > 0 && coord.y > 0 && !tileArray[coord.x - 1][coord.y - 1].getPiece().equals(Pieces.EMPTY))
+				nextTileCheck(tileArray[coord.x - 1][coord.y - 1].getPiece(), whitePiece, coord.x - 1, coord.y - 1);
+			if (coord.x < 7 && coord.y > 0 && !tileArray[coord.x + 1][coord.y - 1].getPiece().equals(Pieces.EMPTY))
+				nextTileCheck(tileArray[coord.x + 1][coord.y - 1].getPiece(), whitePiece, coord.x + 1, coord.y - 1);
+			if (coord.y == 6)
+				nextTileCheck(tileArray[coord.x][coord.y - 2].getPiece(), whitePiece, coord.x, coord.y - 2);
+			if (coord.y > 0) {
+				nextTileCheck(tileArray[coord.x][coord.y - 1].getPiece(), whitePiece, coord.x, coord.y - 1);
+			}
+		} else if (tileArray[coord.x][coord.y].getPiece().toString().startsWith("b")) {
+			if (coord.x > 0 && coord.y < 7 && !tileArray[coord.x - 1][coord.y + 1].getPiece().equals(Pieces.EMPTY))
+				nextTileCheck(tileArray[coord.x - 1][coord.y + 1].getPiece(), whitePiece, coord.x - 1, coord.y + 1);
+			if (coord.x < 7 && coord.y < 7 && !tileArray[coord.x + 1][coord.y + 1].getPiece().equals(Pieces.EMPTY))
+				nextTileCheck(tileArray[coord.x + 1][coord.y + 1].getPiece(), whitePiece, coord.x + 1, coord.y + 1);
+			if (coord.y == 1)
+				nextTileCheck(tileArray[coord.x][coord.y + 2].getPiece(), whitePiece, coord.x, coord.y + 2);
+			if (coord.y < 7) {
+				nextTileCheck(tileArray[coord.x][coord.y + 1].getPiece(), whitePiece, coord.x, coord.y + 1);
+			}
+		}
+	}
+
+	private void moveQueen(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		boolean stop = false;
+
+		// check towards the left
+		int x = coord.x - 1;
+		int y = coord.y;
+		while (x >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+		}
+
+		// check towards the right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y;
+		while (x < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+		}
+
+		// check towards top
+		stop = false;
+		x = coord.x;
+		y = coord.y - 1;
+		while (y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			y--;
+		}
+
+		// check towards bottom
+		stop = false;
+		x = coord.x;
+		y = coord.y + 1;
+		while (y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			y++;
+		}
+
+		stop = false; // check towards the top left
+		x = coord.x - 1;
+		y = coord.y - 1;
+		while (x >= 0 && y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+			y--;
+		}
+
+		// check towards the top right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y - 1;
+		while (x < 8 && y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+			y--;
+		}
+
+		// check towards bottom left
+		stop = false;
+		x = coord.x - 1;
+		y = coord.y + 1;
+		while (x >= 0 && y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+			y++;
+		}
+
+		// check towards bottom right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y + 1;
+		while (x < 8 && y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+			y++;
+		}
+	}
+
+	private void moveRook(Tuple<Integer, Integer> coord, boolean whitePiece) {
+		boolean stop = false;
+
+		// check towards the left
+		int x = coord.x - 1;
+		int y = coord.y;
+		while (x >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x--;
+		}
+
+		// check towards the right
+		stop = false;
+		x = coord.x + 1;
+		y = coord.y;
+		while (x < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			x++;
+		}
+
+		// check towards top
+		stop = false;
+		x = coord.x;
+		y = coord.y - 1;
+		while (y >= 0 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			y--;
+		}
+
+		// check towards bottom
+		stop = false;
+		x = coord.x;
+		y = coord.y + 1;
+		while (y < 8 && !stop) {
+			Pieces p = tileArray[x][y].getPiece();
+			stop = nextTileCheck(p, whitePiece, x, y);
+			y++;
+		}
+	}
+
+	/**
+	 * checks if given tile is legal and if it can go on
+	 * 
+	 * @param p          the Piece on the next tile that has to be checked
+	 * @param whitePiece true if source tile has white piece on it, false -> black
+	 * @param x          x-coordinate of the tile to check
+	 * @param y          y-coordinate of the tile to check
+	 * @return true, if it theres a piece on the next tile (and it shouldnt go any
+	 *         further)
+	 */
+	private boolean nextTileCheck(Pieces p, boolean whitePiece, int x, int y) {
+		// There is a piece on the next tile
+		if (!p.equals(Pieces.EMPTY)) {
+			// It's a black piece And we are moving a white piece ||
+			// It's a white piece And we are moving a black piece
+			if ((p.toString().startsWith("b") && whitePiece) || (p.toString().startsWith("w") && !whitePiece))
+				legalMoves.add(new Tuple<Integer, Integer>(x, y));
+			return true;
+		}
+		// There is no piece on the next tile
+		legalMoves.add(new Tuple<Integer, Integer>(x, y));
+		return false;
 	}
 
 	/**
@@ -211,8 +521,7 @@ public class boardController {
 	private boolean checkLegalMove(Tile target) {
 		// GridPane.getColumnIndex(target), GridPane.getRowIndex(target)
 		// DONE: check if target is in legal move list
-		if (legalMoves
-				.contains(new Tuple<Integer, Integer>(target.getCoord().x, target.getCoord().y))) {
+		if (legalMoves.contains(new Tuple<Integer, Integer>(target.getCoord().x, target.getCoord().y))) {
 			return true;
 		}
 		return false;
@@ -228,9 +537,20 @@ public class boardController {
 		// DONE: move... Xd
 		// DONE: Make List of killed pieces
 		// TODO: Do something with the list of killed enemies
-		Pieces p = source.getPiece();
-		target.setPiece(p);
-		killedPieces.add(p);
-		source.setPiece(Pieces.EMPTY);
+		// TODO: check if pawn goes on last
+		// TODO: check if king is taken
+
+		Pieces sourcePiece = source.getPiece();
+		Pieces targetPiece = target.getPiece();
+
+		if (sourcePiece.toString().startsWith("w") && whitesTurn
+				|| sourcePiece.toString().startsWith("b") && !whitesTurn) {
+			if (!targetPiece.equals(Pieces.EMPTY))
+				killedPieces.add(targetPiece);
+			target.setPiece(sourcePiece);
+			source.removePiece();
+
+			whitesTurn = !whitesTurn;
+		}
 	}
 }
