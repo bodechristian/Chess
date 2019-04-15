@@ -27,7 +27,7 @@ public class boardController {
 	Tile clickedSource;
 	boolean whitesTurn = true;
 
-	String hoverColor = "blue", clickedColor = "green";
+	String hoverColor = "blue", clickedColor = "green", invalidColor = "red";
 
 	@FXML
 	public void initialize() throws IOException {
@@ -169,7 +169,12 @@ public class boardController {
 	private void dragStart(Tile source) {
 		legalMoves(source);
 		clickedSource = source;
-		source.colorBackground(Paint.valueOf(clickedColor));
+		if(source.getPiece().toString().startsWith("w") && whitesTurn
+				|| source.getPiece().toString().startsWith("b") && !whitesTurn) {
+			source.colorBackground(Paint.valueOf(clickedColor));
+		} else {
+			source.colorBackground(Paint.valueOf(invalidColor));
+		}
 		// Drag&Drop stuff
 		Dragboard db = source.startDragAndDrop(TransferMode.ANY);
 		ClipboardContent content = new ClipboardContent();
@@ -188,7 +193,6 @@ public class boardController {
 			move(source, target);
 		}
 		source.resetBackground();
-		target.colorBackground(Paint.valueOf("#ffffff"));
 		legalMoves.clear();
 	}
 
@@ -289,14 +293,22 @@ public class boardController {
 	}
 
 	private void moveKing(Tuple<Integer, Integer> coord, boolean whitePiece) {
-		nextTileCheck(tileArray[coord.x - 1][coord.y - 1].getPiece(), whitePiece, coord.x - 1, coord.y - 1);
-		nextTileCheck(tileArray[coord.x][coord.y - 1].getPiece(), whitePiece, coord.x, coord.y - 1);
-		nextTileCheck(tileArray[coord.x + 1][coord.y - 1].getPiece(), whitePiece, coord.x + 1, coord.y - 1);
-		nextTileCheck(tileArray[coord.x + 1][coord.y].getPiece(), whitePiece, coord.x + 1, coord.y);
-		nextTileCheck(tileArray[coord.x + 1][coord.y + 1].getPiece(), whitePiece, coord.x + 1, coord.y + 1);
-		nextTileCheck(tileArray[coord.x][coord.y + 1].getPiece(), whitePiece, coord.x, coord.y + 1);
-		nextTileCheck(tileArray[coord.x - 1][coord.y + 1].getPiece(), whitePiece, coord.x - 1, coord.y + 1);
-		nextTileCheck(tileArray[coord.x - 1][coord.y].getPiece(), whitePiece, coord.x - 1, coord.y);
+		if ( coord.x >0 && coord.y >0 )
+			nextTileCheck(tileArray[coord.x - 1][coord.y - 1].getPiece(), whitePiece, coord.x - 1, coord.y - 1);
+		if (coord.y >0 )
+			nextTileCheck(tileArray[coord.x][coord.y - 1].getPiece(), whitePiece, coord.x, coord.y - 1);
+		if ( coord.x <7 && coord.y >0)
+			nextTileCheck(tileArray[coord.x + 1][coord.y - 1].getPiece(), whitePiece, coord.x + 1, coord.y - 1);
+		if (coord.x <7 )
+			nextTileCheck(tileArray[coord.x + 1][coord.y].getPiece(), whitePiece, coord.x + 1, coord.y);
+		if ( coord.x <7 && coord.y <7)
+			nextTileCheck(tileArray[coord.x + 1][coord.y + 1].getPiece(), whitePiece, coord.x + 1, coord.y + 1);
+		if ( coord.y <7)
+			nextTileCheck(tileArray[coord.x][coord.y + 1].getPiece(), whitePiece, coord.x, coord.y + 1);
+		if ( coord.x >0 && coord.y <7)
+			nextTileCheck(tileArray[coord.x - 1][coord.y + 1].getPiece(), whitePiece, coord.x - 1, coord.y + 1);
+		if ( coord.x >0)
+			nextTileCheck(tileArray[coord.x - 1][coord.y].getPiece(), whitePiece, coord.x - 1, coord.y);
 	}
 
 	private void moveKnight(Tuple<Integer, Integer> coord, boolean whitePiece) {
